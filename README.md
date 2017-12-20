@@ -1,7 +1,8 @@
 ## Synopsis
 
-This ruby script aim to simplify the browsing of the unofficial Warframe Market website http://warframe.market
-Request the API for multiple items/mods at once, can be given customizable filters, can be used to determine profitable trades and/or best deal.
+This ruby script *aim to simplify* the browsing of the *unofficial* Warframe Market website http://warframe.market
+
+Requests the API for multiple items/mods at once, can be given customizable filters, can be used to determine profitable trades and/or best deal.
 
 ## Code Example
 
@@ -28,24 +29,32 @@ end
 ```
 ## Motivation
 
-Because at the time, warframe.market doesn't support multiple requests, and you have to keep multiples tabs opened to watch an entire pool of items
+Because at the time, warframe.market doesn't support multiple requests, and you have to keep multiples tabs opened to watch an entire pool of items.
+
 Because I'm that lazy.
+
 Because I can.
 
 ## Installation
 
 Windows
-To quickly run this project simply pick from the build/ directory the app.exe and the db/ directory
+To quickly run this project simply pick from the build/ directory the app.exe and the db/ directory.
+
 The executable expects params, that are files containing item list.
-If you don't want to create your own pool of items just pick any .bat launcher  you want.
-`` .\start_app_with_perrin.bat
+
+If you don't want to create your own pool of items just pick any .bat launcher you want.
+
+` .\start_app_with_perrin.bat`
 
 If you don't trust my .exe you will have to setup Ruby environment on your machine. ( => git clone )
-`` ruby app.rb
+
+ `ruby app.rb`
 
 If you want modify and then bundle my lib into and .exe install Ocra gem and run
-`` .\export_project_to_bundle_exe.bat
-`` .\export_buy_sell_to_bundle_exe.bat
+
+` .\export_project_to_bundle_exe.bat`
+`.\export_buy_sell_to_bundle_exe.bat`
+
 This will remove the build directory and generate a new one accordingly to your current db/ directory and ruby source code.
 
 Linux
