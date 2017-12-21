@@ -42,9 +42,9 @@ class APIGetter
       response = get_response(uri)
       parsed = JSON.parse(response)
     rescue SocketError
-      WFLogger.instance.error "Error while trying to connect to #{uri.to_s}\n"
+      WFLogger.instance.error "Error while trying to connect to #{uri.to_s}"
     rescue JSON::ParserError => e
-      WFLogger.instance.error "Error in malformed JSON.\n #{e}"
+      WFLogger.instance.error "Error in malformed JSON.\n#{e}"
     end
     parsed
   end
@@ -58,7 +58,7 @@ class APIGetter
     items.compact.each do |item|
       threads << Thread.new(item,orders) do | item, orders|
         item.strip!
-        WFLogger.instance.info "Querying JSON #{item} ...\n"
+        WFLogger.instance.info "Querying JSON #{item} ..."
         arr = JSON.parse(get_response(forge_URI_item_orders(item)))
         begin
         arr['payload']['orders'].each do |order|
@@ -73,13 +73,13 @@ class APIGetter
           }
         end
         rescue NoMethodError => e
-          WFLogger.instance.warn("#{item} UNKNOWN : #{e}\n")
+          WFLogger.instance.warn("#{item} UNKNOWN : #{e}")
         end
       end
     end
     threads.each(&:join)
     finish = Time.now
-    WFLogger.instance.info "loaded in #{finish-start} seconds\n"
+    WFLogger.instance.info "loaded in #{finish-start} seconds"
     orders
   end
 

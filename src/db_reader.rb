@@ -8,7 +8,7 @@ class WFReader
         r << item.strip!
       end
     rescue LoadError
-      WFLogger.instance.error "unknown filename #{filename}\n"
+      WFLogger.instance.error "unknown filename #{filename}"
     end
     r # => ARRAY < STRING >
   end
