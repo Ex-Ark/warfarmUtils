@@ -1,6 +1,3 @@
-
-DEBUG_LEVEL = false unless defined? DEBUG_LEVEL # 0 means no debug
-
 # read .wf file and returns array of items
 class WFReader
   def self.readWFFile(filename)
@@ -11,7 +8,7 @@ class WFReader
         r << item.strip!
       end
     rescue LoadError
-      print "unknown filename #{filename}\n" if DEBUG_LEVEL
+      WFLogger.instance.error "unknown filename #{filename}\n"
     end
     r # => ARRAY < STRING >
   end

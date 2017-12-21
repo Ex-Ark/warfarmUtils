@@ -4,15 +4,15 @@ require 'net/http'
 require 'uri'
 require 'thread'
 
-require_relative 'model/order.rb'
-require_relative 'filter.rb'
-require_relative 'dal.rb'
+require_relative 'wf_logger'
+require_relative 'model/order'
+require_relative 'filter'
+require_relative 'dal'
 
 VERSION_FIELD = 'v1'.freeze
 ITEMS_FIELD = 'items'.freeze
 ORDERS_FIELD = 'orders'.freeze
 
-DEBUG_LEVEL = false unless defined? DEBUG_LEVEL # 0 means no debug
 
 WARFRAME_MARKET_API_URL ='https://api.warframe.market'.freeze unless defined? WARFRAME_MARKET_API_URL
 
@@ -42,39 +42,14 @@ class APIGetter
       response = get_response(uri)
       parsed = JSON.parse(response)
     rescue SocketError
-      print "Error while trying to connect to #{uri.to_s}\n" if DEBUG_LEVEL
+      WFLogger.instance.error "Error while trying to connect to #{uri.to_s}\n"
     rescue JSON::ParserError => e
-      print "Error in malformed JSON.\n #{e}" if DEBUG_LEVEL
+      WFLogger.instance.error "Error in malformed JSON.\n #{e}"
     end
     parsed
   end
 
-
-
-  def get_all_orders_for_item_list(items)
-    start = Time.now
-    orders = []
-    items.compact.each do |item|
-      item.strip!
-      print "Querying JSON #{item} ...\n" if DEBUG_LEVEL
-      arr = JSON.parse(get_response(forge_URI_item_orders(item)))
-      arr['payload']['orders'].each do |order|
-        orders << Order.new(
-            order['user']['ingame_name'],
-            order['platinum'],
-            order['order_type'],
-            item,
-            order['platform'],
-            order['user']['status']
-        )
-      end
-    end
-    finish = Time.now
-    print "loaded in #{finish-start} seconds\n" if DEBUG_LEVEL
-    orders
-  end
-
-  # threaded version of above function
+  # threaded
   def threaded_get_all_orders_item(items)
     start = Time.now
     threads = []
@@ -83,7 +58,7 @@ class APIGetter
     items.compact.each do |item|
       threads << Thread.new(item,orders) do | item, orders|
         item.strip!
-        print "Querying JSON #{item} ...\n" if DEBUG_LEVEL
+        WFLogger.instance.info "Querying JSON #{item} ...\n"
         arr = JSON.parse(get_response(forge_URI_item_orders(item)))
         begin
         arr['payload']['orders'].each do |order|
@@ -98,13 +73,13 @@ class APIGetter
           }
         end
         rescue NoMethodError => e
-          print("#{item} UNKNOW : #{e}\n") if DEBUG_LEVEL
+          WFLogger.instance.warn("#{item} UNKNOWN : #{e}\n")
         end
       end
     end
     threads.each(&:join)
     finish = Time.now
-    print "loaded in #{finish-start} seconds\n" if DEBUG_LEVEL
+    WFLogger.instance.info "loaded in #{finish-start} seconds\n"
     orders
   end
 
