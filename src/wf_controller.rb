@@ -24,12 +24,9 @@ class WFController
     orders = []
     if(!@items.empty?)
       @items.shuffle! #ninja
-      ords = @api_getter.threaded_get_all_orders_item @items
-      WFLogger.instance.info "Filtering results.."
-      buy_orders = OrderFilter.filter_ingame_buyers ords
-      orders = OrderFilter.sort_orders_by_price buy_orders
+      orders = @api_getter.threaded_get_all_orders_item @items
     else
-      WFLogger.instance.error "No items to query, perhaps you have not used # load_files(files)"
+      WFLogger.instance.warn 'No items to query, perhaps you have not used # load_files(files)'
     end
     orders
   end

@@ -10,9 +10,9 @@ OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 ctr = WFController.new
 ctr.load_files ARGV
 
-##WFDAL::json_to_order_array warframeFinder.get_json_content_for_item(items[0])
 loop do
-  buy_orders = ctr.query_items
+  all_orders = ctr.query_items
+  buy_orders = OrderFilter.filter_ingame_buyers all_orders
   system 'clear' or system 'cls'
   buy_orders.each do |ord|
     print "#{ord}#{ord.price>=10 ? "#{ord.create_custom_private_message}" : "\n"}"

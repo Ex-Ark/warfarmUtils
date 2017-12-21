@@ -1,0 +1,10 @@
+soma_prime_barrel
+soma_prime_stock
+mirage_prime_set
+mirage_prime_chassis
+mirage_prime_systems
+burston_prime_set
+tigris_prime_set
+ember_prime_chassis
+ember_prime_set
+ember_prime_systems
