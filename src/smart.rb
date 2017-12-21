@@ -52,7 +52,7 @@ class Smart
     mutex = Mutex.new
     items.compact.each do |item|
       threads << Thread.new(item,batch) do | item, orders|
-        WFLogger.instance.info "Querying JSON #{item} ...\n"
+        WFLogger.instance.info "Querying JSON #{item} ..."
         ret = get_interesting_orders item
         mutex.synchronize{
           ret.each do |str|
@@ -63,7 +63,7 @@ class Smart
     end
     threads.each(&:join)
     finish = Time.now
-    WFLogger.instance.info "loaded in #{finish-start} seconds\n"
+    WFLogger.instance.info "loaded in #{finish-start} seconds"
     batch
   end
 end

@@ -7,8 +7,9 @@ class WFReader
       contents.each_line do |item|
         r << item.strip!
       end
-    rescue LoadError
-      WFLogger.instance.error "unknown filename #{filename}\n"
+      WFLogger.instance.info "#{self.to_s} read #{r.size} items"
+    rescue
+      WFLogger.instance.error "unknown filename #{filename}"
     end
     r # => ARRAY < STRING >
   end
