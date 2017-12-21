@@ -1,6 +1,3 @@
-DEBUG_LEVEL = false # 0 means no debug
-# you have to defined DEBUG var before including finder, because of multiple definition
-
 require 'json'
 require 'net/http'
 require 'uri'
@@ -28,13 +25,12 @@ loop do
   # has to use items list because API doesn't support global GET ( all items at once )
   all_orders = warframeFinder.threaded_get_all_orders_item items
   buy_orders = OrderFilter.filter_ingame_buyers( all_orders)
-  print "Loading datas...\n" if DEBUG_LEVEL
+  WFLogger.instance.info "Loading datas...\n"
   OrderFilter.sort_orders_by_price buy_orders
-  system 'clear' or system 'cls' if !DEBUG_LEVEL
+  system 'clear' or system 'cls'
   buy_orders.each do |ord|
     print "#{ord}#{ord.price>=10 ? "#{ord.create_custom_private_message}" : "\n"}"
   end
-  if DEBUG_LEVEL
     print "\n---- Price Check ----\n"
     items.compact.each do |item|
       price = OrderFilter.filter_lowest_price_seller_for_item(all_orders,item)
@@ -44,7 +40,6 @@ loop do
       else print("#{price}p\n")
       end
     end
-  end
 
   exit if defined?(Ocra) # Ocra uses dynamic dependence resolution
   # => if we are bundling the app we have to exit after 1st loop

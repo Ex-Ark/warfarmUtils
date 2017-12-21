@@ -1,6 +1,7 @@
 require_relative 'dal.rb'
 require_relative 'filter.rb'
 require_relative 'api_getter.rb'
+require_relative 'wf_logger'
 
 class Smart
 
@@ -51,18 +52,18 @@ class Smart
     mutex = Mutex.new
     items.compact.each do |item|
       threads << Thread.new(item,batch) do | item, orders|
+        WFLogger.instance.info "Querying JSON #{item} ...\n"
         ret = get_interesting_orders item
         mutex.synchronize{
           ret.each do |str|
             batch << "#{str}\n"
           end
         }
-        get_interesting_orders item
       end
     end
     threads.each(&:join)
     finish = Time.now
-    print "loaded in #{finish-start} seconds\n" if DEBUG_LEVEL
+    WFLogger.instance.info "loaded in #{finish-start} seconds\n"
     batch
   end
 end
