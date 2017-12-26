@@ -12,7 +12,7 @@ ctr.load_files ARGV
 
 loop do
   all_orders = ctr.query_items
-  buy_orders = OrderFilter.filter_ingame_buyers all_orders
+  buy_orders = OrderFilter.sort_orders_by_price(OrderFilter.filter_ingame_buyers all_orders)
   system 'clear' or system 'cls'
   buy_orders.each do |ord|
     print "#{ord}#{ord.price>=10 ? "#{ord.create_custom_private_message}" : "\n"}"

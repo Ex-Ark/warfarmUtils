@@ -13,4 +13,4 @@ xcopy db build\db
 (echo .\app.exe suda.wf) >  build\start_app_with_suda.bat
 (echo .\app.exe veil.wf) >  build\start_app_with_veil.bat
 
-ocra --output build\app.exe app.rb
+ocra --output build\app.exe --no-enc app.rb

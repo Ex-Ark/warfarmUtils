@@ -59,8 +59,8 @@ class APIGetter
       threads << Thread.new(item,orders) do | item, orders|
         item.strip!
         WFLogger.instance.info "Querying JSON #{item} ..."
-        arr = JSON.parse(get_response(forge_URI_item_orders(item)))
         begin
+        arr = JSON.parse(get_response(forge_URI_item_orders(item)))
         arr['payload']['orders'].each do |order|
           mutex.synchronize{ orders << Order.new(
               order['user']['ingame_name'],
@@ -72,6 +72,8 @@ class APIGetter
           )
           }
         end
+        rescue JSON::ParserError => e
+          WFLogger.instance.warn("#{item} Invalid Json : #{e}")
         rescue NoMethodError => e
           WFLogger.instance.warn("#{item} UNKNOWN : #{e}")
         end
