@@ -60,18 +60,20 @@ class APIGetter
         item.strip!
         WFLogger.instance.info "Querying JSON #{item} ..."
         begin
-        arr = JSON.parse(get_response(forge_URI_item_orders(item)))
-        arr['payload']['orders'].each do |order|
-          mutex.synchronize{ orders << Order.new(
-              order['user']['ingame_name'],
-              order['platinum'],
-              order['order_type'],
-              item,
-              order['platform'],
-              order['user']['status']
-          )
-          }
-        end
+          sleep(rand(10)) #TODO : request in controller as background process to avoid flodding the server
+          #TODO complete thread to query and update datas, another thread to display UI
+          arr = JSON.parse(get_response(forge_URI_item_orders(item)))
+          arr['payload']['orders'].each do |order|
+            mutex.synchronize{ orders << Order.new(
+                order['user']['ingame_name'],
+                order['platinum'],
+                order['order_type'],
+                item,
+                order['platform'],
+                order['user']['status']
+            )
+            }
+          end
         rescue JSON::ParserError => e
           WFLogger.instance.warn("#{item} Invalid Json : #{e}")
         rescue NoMethodError => e
@@ -89,7 +91,12 @@ class APIGetter
 
   # does the HTTP request from uri, provided by forge functions
   def get_response(uri)
-    Net::HTTP.get(uri) # => String
+    res = Net::HTTP.get_response(uri)
+    if res.code == '200'
+      ret = res.body
+    else ret = "Html error : #{res.code}"
+    end
+    ret # => String
   end
 
   # returns the URI for this item's json
