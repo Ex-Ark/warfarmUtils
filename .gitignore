@@ -1,2 +1,6 @@
 .idea/
 wf.log
+app_v2.rb
+Gemfile
+Gemfile.lock
+tail_log.bat
