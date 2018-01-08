@@ -6,8 +6,13 @@ require 'discordrb'
 
 require_relative 'src/wf_controller'
 
+# requires you to have an api key for you project
+# https://discordapp.com/developers/applications/me/
+token = File.open('discord_api_key.sd').readline
 
-bot = Discordrb::Commands::CommandBot.new token: 'NDAwMDMzMjU0ODMwMzc0OTEz.DTVvnw.8JgZ5sDrftjDKfG1fBxKoeYJSBw', prefix: '!', client_id: '400033254830374913'
+p "token found: #{token}\n"
+
+bot = Discordrb::Commands::CommandBot.new token: token, prefix: '!', client_id: '400033254830374913'
 
 bot.command :syndicate do |_event, *args|
   if args.any?
