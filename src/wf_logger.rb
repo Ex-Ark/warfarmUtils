@@ -1,6 +1,6 @@
 require 'logger'
 
-LEVEL = Logger::WARN  # change here the level of log you want to have
+LEVEL = Logger::INFO  # change here the level of log you want to have
 
 # WFLogger is used in the project to log errors, progress, infos
 # Wrapping the Logger class and encapsulating it into a Singleton

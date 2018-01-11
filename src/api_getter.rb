@@ -87,6 +87,36 @@ class APIGetter
     orders
   end
 
+  def get_all_orders_item(items)
+    start = Time.now
+    orders = []
+
+    items.compact.each do |item|
+        item.strip!
+        WFLogger.instance.info "Querying JSON #{item} ..."
+        begin
+          arr = JSON.parse(get_response(forge_URI_item_orders(item)))
+          arr['payload']['orders'].each do |order|
+           orders << Order.new(
+                order['user']['ingame_name'],
+                order['platinum'],
+                order['order_type'],
+                item,
+                order['platform'],
+                order['user']['status']
+            )
+          end
+        rescue JSON::ParserError => e
+          WFLogger.instance.warn("#{item} Invalid Json : #{e}")
+        rescue NoMethodError => e
+          WFLogger.instance.warn("#{item} UNKNOWN : #{e}")
+        end
+    end
+    finish = Time.now
+    WFLogger.instance.info "loaded in #{finish-start} seconds"
+    orders
+  end
+
   private
 
   # does the HTTP request from uri, provided by forge functions
