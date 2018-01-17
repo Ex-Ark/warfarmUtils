@@ -21,5 +21,4 @@ class Notifier
     notify "#{count==0?'No':count} people interested in #{name.capitalize}",ico
   end
 end
-Notifier.notify_plat 10
-Notifier.notify_syndicate 'perrin',8
+
