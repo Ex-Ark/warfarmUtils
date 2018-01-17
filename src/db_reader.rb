@@ -4,7 +4,11 @@ class WFReader
     r = []
     begin
       # check exact filename, if doesn't exists search in db/ folder
-      contents = File.read filename or  contents = File.read "db/#{filename}"
+      if File.exist?(filename)
+        contents = File.read filename
+      else
+        contents = File.read "db/#{filename}"
+      end
       contents.each_line do |item|
         r << item.strip!
       end
