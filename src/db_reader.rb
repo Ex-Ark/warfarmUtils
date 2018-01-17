@@ -3,7 +3,8 @@ class WFReader
   def self.readWFFile(filename)
     r = []
     begin
-      contents = File.read "db/#{filename}"
+      # check exact filename, if doesn't exists search in db/ folder
+      contents = File.read filename or  contents = File.read "db/#{filename}"
       contents.each_line do |item|
         r << item.strip!
       end
