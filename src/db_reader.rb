@@ -12,7 +12,7 @@ class WFReader
       contents.each_line do |item|
         r << item.strip!
       end
-      WFLogger.instance.info "#{self.to_s} read #{r.size} items"
+      WFLogger.instance.info "#{self.to_s} now has #{r.size} items"
     rescue
       WFLogger.instance.error "unknown filename #{filename}"
     end
