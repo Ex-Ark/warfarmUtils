@@ -45,6 +45,7 @@ class Smart
   end
 
   # threaded version to get all items
+  # TODO : no longer works with nginx api
   def threaded_get_all_interesting_items(items)
     start = Time.now
     threads = []

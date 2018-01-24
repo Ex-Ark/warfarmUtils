@@ -24,7 +24,7 @@ class WFController
     orders = []
     if(!@items.empty?)
       @items.shuffle! #ninja
-      orders = @api_getter.threaded_get_all_orders_item @items
+      orders = @api_getter.get_all_orders_item @items
     else
       WFLogger.instance.warn 'No items to query, perhaps you have not used # load_files(files)'
     end

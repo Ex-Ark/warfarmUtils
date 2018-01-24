@@ -19,7 +19,7 @@ buy_orders.each do |ord|
 end
 ```
 
-Determine profitable trades ( usage will be changed soon tm)
+Determine profitable trades ( usage will be changed Soon™)
 ``` 
 items =  WFReader.readWFFile 'buy_sell.wf'
 s = Smart.new 
@@ -40,7 +40,7 @@ Because I can.
 
 ## Installation
 
-###Windows
+##Windows
 
 To quickly run this project simply pick from the build/ directory the app.exe and the db/ directory.
 
@@ -54,14 +54,14 @@ If you don't trust my .exe you will have to setup Ruby environment on your machi
 
  `ruby app.rb`
 
-If you want modify and then bundle my lib into and .exe install Ocra gem and run
+If you want to modify and then bundle my lib into and .exe install Ocra gem and run
 
 ` .\export_project_to_bundle_exe.bat`
 `.\export_buy_sell_to_bundle_exe.bat`
 
 This will remove the build directory and generate a new one accordingly to your current db/ directory and ruby source code.
 
-###Linux
+##Linux
 
 Soon™
 
