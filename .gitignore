@@ -1,7 +1,7 @@
 .idea/
+o--rdoc
 wf.log
-app_v2.rb
-Gemfile
 Gemfile.lock
 tail_log.bat
 discord_api_key.sd
+start_discord_bot.sh

@@ -30,7 +30,7 @@ bot.command :syndicate do |_event, *args|
     buy_orders = OrderFilter.sort_orders_by_price(OrderFilter.filter_ingame_buyers all_orders)
     out = []
     buy_orders.each do |ord|
-	  out << "#{ord}#{ord.price>=10 ? "\n#{ord.create_custom_private_message}" : ''}" unless ord.price < 5
+	  out << "#{ord}#{ord.price>=10 ? "\n#{ord.create_custom_private_message}" : ''}" unless ord.price < 7
     end
 	out = out.join("\n")
 	if out.length >= DISCORD_MAX_CHAR_PER_MESSAGE
