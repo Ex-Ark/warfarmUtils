@@ -1,13 +1,8 @@
-
-require 'json'
 require 'net/http'
 require 'uri'
-require 'thread'
+require 'json'
 
 require_relative 'wf_logger'
-require_relative 'model/order'
-require_relative 'filter'
-require_relative 'dal'
 
 VERSION_FIELD = 'v1'.freeze
 ITEMS_FIELD = 'items'.freeze
@@ -16,37 +11,37 @@ ORDERS_FIELD = 'orders'.freeze
 
 WARFRAME_MARKET_API_URL ='https://api.warframe.market'.freeze unless defined? WARFRAME_MARKET_API_URL
 
+module WFAPI
+
+class APIError < StandardError
+  attr_reader :request
+  def initialize(msg='API responded with an error', req=nil)
+    @request = req
+    super("#{msg}:#{req != nil ? req : ''}")
+  end
+end
+
 # designed to work with the Warframe.market JSON API
 # api.warframe.market/VERSION_FIELD/ITEMS_FIELD/$searchedItem/ORDERS_FIELD
 class APIGetter
+
   #: @base_url json api url
   def initialize(base_url=WARFRAME_MARKET_API_URL)
     @url = base_url
   end
 
-  # returns array containing all orders for this item
-  # does not filter results
-  def get_all_orders_for_item(item_name)
-    json = get_json_content_for_item item_name
-    orders = WFDAL.json_to_order_array json
-    orders.each do | order|
-      order.item = item_name
-    end
-    orders
-  end
-
-  # request url and returns Json Data
-  def get_json_content_for_item(item_name)
+  # request url and returns api answer
+  def get_web_content_for_item(item_name)
     begin
       uri = forge_URI_item_orders(item_name)
-      response = get_response(uri)
-      parsed = JSON.parse(response)
+      WFLogger.instance.info "Querying JSON #{item_name} ..."
+      response = get_response(uri);
     rescue SocketError
       WFLogger.instance.error "Error while trying to connect to #{uri.to_s}"
-    rescue JSON::ParserError => e
-      WFLogger.instance.error "Error in malformed JSON.\n#{e}"
+    rescue APIError => e
+      raise e
     end
-    parsed
+    response # => String
   end
 
   # threaded
@@ -60,7 +55,6 @@ class APIGetter
         item.strip!
         WFLogger.instance.info "Querying JSON #{item} ..."
         begin
-          sleep(rand(10)) #TODO : request in controller as background process to avoid flodding the server
           #TODO complete thread to query and update datas, another thread to display UI
           arr = JSON.parse(get_response(forge_URI_item_orders(item)))
           arr['payload']['orders'].each do |order|
@@ -87,44 +81,14 @@ class APIGetter
     orders
   end
 
-  def get_all_orders_item(items)
-    start = Time.now
-    orders = []
-
-    items.compact.each do |item|
-        item.strip!
-        WFLogger.instance.info "Querying JSON #{item} ..."
-        begin
-          arr = JSON.parse(get_response(forge_URI_item_orders(item)))
-          arr['payload']['orders'].each do |order|
-           orders << Order.new(
-                order['user']['ingame_name'],
-                order['platinum'],
-                order['order_type'],
-                item,
-                order['platform'],
-                order['user']['status']
-            )
-          end
-        rescue JSON::ParserError => e
-          WFLogger.instance.warn("#{item} Invalid Json : #{e}")
-        rescue NoMethodError => e
-          WFLogger.instance.warn("#{item} UNKNOWN : #{e}")
-        end
-    end
-    finish = Time.now
-    WFLogger.instance.info "loaded in #{finish-start} seconds"
-    orders
-  end
-
   private
 
-  # does the HTTP request from uri, provided by forge functions
+  # does the HTTP request from the uri provided by forge functions
   def get_response(uri)
     res = Net::HTTP.get_response(uri)
     if res.code == '200'
       ret = res.body
-    else ret = "Html error : #{res.code}"
+    else raise WFAPI::APIError.new('net::http get response error',uri.to_s)
     end
     ret # => String
   end
@@ -143,4 +107,7 @@ class APIGetter
   def forge_URI_all
     URI("#{@url}/#{VERSION_FIELD}/#{ITEMS_FIELD}")
   end
-end
+
+end # api getter end
+
+end # module end
