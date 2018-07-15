@@ -1,18 +1,55 @@
 require 'json'
-require 'net/http'
 require 'uri'
-
+require 'http'
+require 'time'
 require 'discordrb'
 
-require_relative 'src/wf_controller'
 
 DISCORD_MAX_CHAR_PER_MESSAGE=2000
+
 
 # requires you to have an api key for you project
 # https://discordapp.com/developers/applications/me/
 token = File.open('discord_api_key.sd').readline
 
-p "token found: #{token}\n"
+# this is my secret api
+REMOTE_API = File.open('remote_api.sd').readline
+
+puts "token found: #{token}"
+puts "linked to remote api : #{REMOTE_API}"
+response = Http.get "#{REMOTE_API}/syndicates"
+SYNDICATES = response.parse(:json)
+
+SHORT_SYNDICATE_NAME = {
+  veil: 'Red Veil',
+  perrin: 'Perrin Sequence',
+  loka: 'New Loka',
+  meridian: 'Steel Meridian',
+  hexis: 'Arbiter of Hexis',
+  suda: 'Cephalon Suda'
+}
+
+def find_syndicate_id syndicate
+  full_name = SHORT_SYNDICATE_NAME[syndicate.to_sym]
+  s = SYNDICATES.select { |s| s['name'] == full_name }
+  return s.first['id'], s.first['logo']
+end
+
+def get_all_id
+  SYNDICATES.map {|s| s['id']}
+end
+
+def refresh_syndicate_orders id
+  Http.put "#{REMOTE_API}/update_orders/#{id}"
+end
+
+def delete_syndicate_orders id
+  Http.delete "#{REMOTE_API}/update_orders/#{id}"
+end
+
+def get_syndicate_orders id
+  Http.get "#{REMOTE_API}/syndicates/#{id}/orders"
+end  
 
 bot = Discordrb::Commands::CommandBot.new token: token, prefix: '!', client_id: '400033254830374913'
 known_commands = {
@@ -22,48 +59,94 @@ known_commands = {
   "Test me, if i'm up i'll answer pong!", 
  syndicate:
   "Get all orders from warframe.market for given syndicates\n\
+   Minimum price can be specified, with a default value of 10\n\
    Aliases: s | search\n\
-   Usage: <syndicate1> [ <syndicate2> ]\n\
-   Get all available syndicates by calling !syndicate without params"
+   Usage: !s <syndicate> [<min_price>]\n\
+   Get all available syndicates by calling !syndicate without params",
+  refresh:
+   "Refresh to the most recent orders for a syndicate\n\
+    Usage: !refresh <syndicate>",
+  clear:
+   "Clear all orders for a syndicate\n\
+    Usage: !clear <syndicate>"  
 }
 bot.command :help do |_event, *args|
- out = [] 
- out << "Here is the list all currently available commands:"
- known_commands.each do |command,explanation|
-   out << "!#{command}             ~> *#{explanation}*"
+ _event.channel.send_embed do |embed|
+    embed.title = "All available commands:"
+    embed.color = 3447003
+    embed.description = "Prefix is '!' "
+   known_commands.each do |command,explanation|
+     embed.add_field(name: "!#{command}", value: "#{explanation}")
+   end
  end
- out.join("\n")
 end
 
-bot.command [:syndicate, :search, :s] do |_event, *args|
-  if args.any?
-    files = []
-    bot.send_temporary_message(_event.channel.id, "*Requesting datas! Hold on #{_event.author.name} ..*\n",30)
-    p "#{bot.prefix}:syndicate #{args}"
-    args.each do |syndic|
-      files << "#{syndic}.wf"
+def refresh_syndicate name
+  id, logo = find_syndicate_id name
+  delete_syndicate_orders id
+  refresh_syndicate_orders id
+end
+
+def clear_syndicate name
+  id, logo = find_syndicate_id name
+  delete_syndicate_orders id
+end
+
+bot.command :refresh do |_event, *args|
+  return if args.empty?
+  if args[0] == 'all'
+    get_all_id.each do |id|
+      refresh_syndicate_orders id
     end
-    ctr = WFController.new
-    ctr.load_files files
-    all_orders = ctr.query_items
-    buy_orders = OrderFilter.sort_orders_by_price(OrderFilter.filter_ingame_buyers all_orders)
-    out = []
-    buy_orders.each do |ord|
-	  out << "#{ord}#{ord.price>=10 ? "\n#{ord.create_custom_private_message}" : ''}" unless ord.price < 9
-    end
-	out = out.join("\n")
-	if out.length >= DISCORD_MAX_CHAR_PER_MESSAGE
-		bot.send_message(_event.channel.id, "*My text exceeds the 2000 characters limit of Discord\nThis message might be cut sorry :/* \n")
-		bot.send_message(_event.channel.id, out[0..DISCORD_MAX_CHAR_PER_MESSAGE-1])
-		bot.send_message(_event.channel.id, out[DISCORD_MAX_CHAR_PER_MESSAGE..out.length])
-	else 
-		bot.send_message(_event.channel.id, out)
-		bot.send_temporary_message(_event.channel.id, "\n*loaded in #{Time.now - _event.timestamp} seconds.*",5)
-	end
-    # Again, the return value of the block is sent to the channel
-    ''
+    _event.channel.send_embed do |embed|
+      embed.color = 3447003
+      embed.description = "Refresh for all syndicates started"
+      end
   else
-    "*No syndicates provided\n Retry with the followings : perrin loka veil hexis suda*"
+    refresh_syndicate args[0]
+    _event.channel.send_embed do |embed|
+      embed.color = 3447003
+      embed.description = "Refresh for #{SHORT_SYNDICATE_NAME[args[0].to_sym]} started"
+    end
+  end
+end
+
+bot.command :clear do |_event, *args|
+  return if args.empty?
+  if args[0] == 'all'
+    get_all_id.each do |id|
+      delete_syndicate_orders id
+    end
+    _event.channel.send_embed do |embed|
+      embed.color = 3447003
+      embed.description = "Cleared all syndicates orders"
+    end
+  else
+    clear_syndicate args[0]
+    _event.channel.send_embed do |embed|
+      embed.color = 3447003
+      embed.description = "Cleared #{SHORT_SYNDICATE_NAME[args[0].to_sym]} orders"
+    end
+  end
+end
+
+
+bot.command [:syndicate, :search, :s] do |_event, *args|
+  return if args.empty?
+  id, logo = find_syndicate_id args[0]
+  price = args[1] ? args[1].to_i : 10
+  response = get_syndicate_orders id
+  orders = response.parse(:json)
+  # discord limit is 25 field object
+  _event.channel.send_embed do |embed|
+    embed.thumbnail = Discordrb::Webhooks::EmbedThumbnail.new(url: logo)
+    embed.color = 3447003
+    embed.title = "#{SHORT_SYNDICATE_NAME[args[0].to_sym]} orders"
+    embed.description = '25 first orders sorted by price'
+    orders.select { |o| o['price'] >= price  }.sort_by { |o| o['price']}[0..24].each do |order|
+      time_elapsed = ((Time.now - Time.parse(order['updated_at'])) / 60).round
+      embed.add_field(name: "#{order['price']} platinum    #{time_elapsed} minutes ago", value: order['private_message'], inline: true)
+    end
   end
 end
 
