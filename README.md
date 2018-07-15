@@ -4,6 +4,8 @@ This ruby script *aim to simplify* the browsing of the *unofficial* Warframe Mar
 
 Requests the API for multiple items/mods at once, can be given customizable filters, can be used to determine profitable trades and/or best deal.
 
+## Bot usage example
+![usage_example_search_syndicate](https://www.dropbox.com/s/7ipya2ldo751ikv/bot_discord_warfarm_syndicate.PNG?raw=1)
 ## Code Example
 
 Get all online buyers for a given pool of items (ex: syndicates items)
