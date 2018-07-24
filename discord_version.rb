@@ -15,10 +15,15 @@ token = File.open('discord_api_key.sd').readline
 
 # this is my secret api
 REMOTE_API = File.open('remote_api.sd').readline.strip
+# this is my secret token
+wf_token = File.open('remote_api_key.sd').readline.strip
 
 puts "token found: #{token}"
 puts "linked to remote api : #{REMOTE_API}"
-response = Http.get "#{REMOTE_API}/syndicates"
+puts "using X-WF-TOKEN=#{wf_token}"
+AUTH_HEADERS = { 'X-WF-TOKEN' => wf_token }
+
+response = Http.get "#{REMOTE_API}/syndicates", headers: AUTH_HEADERS
 SYNDICATES = response.parse(:json)
 
 SHORT_SYNDICATE_NAME = {
@@ -41,15 +46,15 @@ def get_all_id
 end
 
 def refresh_syndicate_orders id
-  Http.put "#{REMOTE_API}/update_orders/#{id}"
+  Http.put "#{REMOTE_API}/update_orders/#{id}", headers: AUTH_HEADERS
 end
 
 def delete_syndicate_orders id
-  Http.delete "#{REMOTE_API}/update_orders/#{id}"
+  Http.delete "#{REMOTE_API}/update_orders/#{id}", headers: AUTH_HEADERS
 end
 
 def get_syndicate_orders id
-  Http.get "#{REMOTE_API}/syndicates/#{id}/orders"
+  Http.get "#{REMOTE_API}/syndicates/#{id}/orders", headers: AUTH_HEADERS
 end  
 
 bot = Discordrb::Commands::CommandBot.new token: token, prefix: '!', client_id: '400033254830374913'
