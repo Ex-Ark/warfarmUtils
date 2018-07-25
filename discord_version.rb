@@ -4,6 +4,7 @@ require 'http'
 require 'time'
 require 'discordrb'
 
+require_relative 'scrap_item_logo'
 
 DISCORD_MAX_CHAR_PER_MESSAGE=2000
 
@@ -13,11 +14,16 @@ DISCORD_MAX_CHAR_PER_MESSAGE=2000
 token = File.open('discord_api_key.sd').readline
 
 # this is my secret api
-REMOTE_API = File.open('remote_api.sd').readline
+REMOTE_API = File.open('remote_api.sd').readline.strip
+# this is my secret token
+wf_token = File.open('remote_api_key.sd').readline.strip
 
 puts "token found: #{token}"
 puts "linked to remote api : #{REMOTE_API}"
-response = Http.get "#{REMOTE_API}/syndicates"
+puts "using X-WF-TOKEN=#{wf_token}"
+AUTH_HEADERS = { 'X-WF-TOKEN' => wf_token }
+
+response = Http.get "#{REMOTE_API}/syndicates", headers: AUTH_HEADERS
 SYNDICATES = response.parse(:json)
 
 SHORT_SYNDICATE_NAME = {
@@ -40,15 +46,15 @@ def get_all_id
 end
 
 def refresh_syndicate_orders id
-  Http.put "#{REMOTE_API}/update_orders/#{id}"
+  Http.put "#{REMOTE_API}/update_orders/#{id}", headers: AUTH_HEADERS
 end
 
 def delete_syndicate_orders id
-  Http.delete "#{REMOTE_API}/update_orders/#{id}"
+  Http.delete "#{REMOTE_API}/update_orders/#{id}", headers: AUTH_HEADERS
 end
 
 def get_syndicate_orders id
-  Http.get "#{REMOTE_API}/syndicates/#{id}/orders"
+  Http.get "#{REMOTE_API}/syndicates/#{id}/orders", headers: AUTH_HEADERS
 end  
 
 bot = Discordrb::Commands::CommandBot.new token: token, prefix: '!', client_id: '400033254830374913'
@@ -126,6 +132,35 @@ bot.command :clear do |_event, *args|
     _event.channel.send_embed do |embed|
       embed.color = 3447003
       embed.description = "Cleared #{SHORT_SYNDICATE_NAME[args[0].to_sym]} orders"
+    end
+  end
+end
+
+bot.command :item do |_event, *args|
+  return if args.empty?
+  name = args[0]
+  resp = Http.get "https://api.warframe.market/v1/items/#{name}/orders"
+  if resp.status.success?
+    buy_price = 0
+    sell_price = 9999 
+    resp.parse(:json)['payload']['orders'].each do |order|
+      next if order['user']['status'] == 'offline'
+      if order['order_type'] == 'sell' && order['platinum'] < sell_price
+        sell_price = order['platinum']
+      else
+        if order['order_type'] == 'buy' && order['platinum'] > buy_price
+          buy_price = order['platinum']  
+        end
+      end
+    end
+    thumb = get_item_thumbnail name
+    _event.channel.send_embed do |embed|
+      embed.color = 3447003
+      embed.title = 'Price check'
+      embed.thumbnail = Discordrb::Webhooks::EmbedThumbnail.new(url: thumb)
+      embed.description = "Online prices on warframe.market for #{name}"
+      embed.add_field(name: 'People sell it for:', value: sell_price.to_s)
+      embed.add_field(name: 'People buy it for up to:', value: buy_price.to_s)
     end
   end
 end
