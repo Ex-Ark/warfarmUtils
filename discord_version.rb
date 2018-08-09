@@ -3,11 +3,14 @@ require 'uri'
 require 'http'
 require 'time'
 require 'discordrb'
+require 'active_support'
+require 'active_support/core_ext'
 
 require_relative 'scrap_item_logo'
 
 DISCORD_MAX_CHAR_PER_MESSAGE=2000
 
+WFCONTENT = 'http://content.warframe.com/dynamic/worldState.php'
 
 # requires you to have an api key for you project
 # https://discordapp.com/developers/applications/me/
@@ -34,6 +37,49 @@ SHORT_SYNDICATE_NAME = {
   hexis: 'Arbiter of Hexis',
   suda: 'Cephalon Suda'
 }
+
+# returns remaining time before cetus_missions reset
+def cetus_time
+  resp = Http.get WFCONTENT
+  world_state = resp.parse(:json)
+  cetus_missions = world_state['SyndicateMissions'].select { |syndicate| syndicate['Tag']=='CetusSyndicate' }.first
+  expires_at = cetus_missions['Expiry']['$date']['$numberLong'].to_i
+  (expires_at / 1000) - Time.now.to_i
+end
+
+cetus_icons = {
+    day: 'https://raw.githubusercontent.com/PopThosePringles/Warframe-Cetus-Time-Left/master/sun.png',
+    night: 'https://raw.githubusercontent.com/PopThosePringles/Warframe-Cetus-Time-Left/master/moon.png'
+}
+
+# convert remaining time to day/nigh cycle
+def cetus_day_night_cycle
+  night_duration = 3000 # 50 minutes * 60 seconds
+  day_duration = 6000 # 100 minutes * 60 seconds
+  remaining = cetus_time
+  if remaining.between?(0, night_duration)
+    state = 'night'
+  else
+    state = 'day'
+  end
+  remaining += night_duration + day_duration if remaining < 0
+  if remaining > night_duration
+    state = 'day'
+    remaining -= night_duration
+  end
+  hours = remaining / 3600
+  minutes = (remaining % 3600) / 60
+  seconds = remaining % 60
+  will_be_time = DateTime.now + hours.hours + minutes.minutes + seconds.seconds
+  {
+    state: state,
+    h: hours,
+    m: minutes,
+    s: seconds,
+    will_be_time: will_be_time
+  }
+  # TODO make forecast of future time cetus clock each day / hour
+end
 
 def find_syndicate_id syndicate
   full_name = SHORT_SYNDICATE_NAME[syndicate.to_sym]
@@ -72,6 +118,9 @@ known_commands = {
   refresh:
    "Refresh to the most recent orders for a syndicate\n\
     Usage: !refresh <syndicate>",
+  cetus:
+   "Get the current time cycle in Cetus\n\
+    Usage: !cetus",
   clear:
    "Clear all orders for a syndicate\n\
     Usage: !clear <syndicate>"  
@@ -133,6 +182,19 @@ bot.command :clear do |_event, *args|
       embed.color = 3447003
       embed.description = "Cleared #{SHORT_SYNDICATE_NAME[args[0].to_sym]} orders"
     end
+  end
+end
+
+bot.command :cetus do |_event, *args|
+  infos = cetus_day_night_cycle
+  _event.channel.send_embed do |embed|
+    embed.color = 3447003
+    embed.title = 'Cetus Day/Night Cycle'
+    embed.thumbnail = Discordrb::Webhooks::EmbedThumbnail.new(url: cetus_icons[infos[:state].to_sym])
+    embed.description = 'Plains of Eidolon'
+    embed.add_field(name: 'Current time:', value: infos[:state])
+    embed.add_field(name: 'Remaining:', value: "#{infos[:h]}h:#{infos[:m]}m:#{infos[:s]}s")
+    embed.add_field(name: 'Next cycle start at:', value: infos[:will_be_time].strftime('%H:%M:%S'))
   end
 end
 
