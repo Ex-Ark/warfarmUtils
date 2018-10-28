@@ -151,15 +151,16 @@ bot.command %i[item price i] do |_event, *args|
   if resp.status.success?
     buy_price = 0
     sell_price = Float::INFINITY
+    s_player_name = b_player_name = '#ND#'
     resp.parse(:json)['payload']['orders'].each do |order|
       next if order['user']['status'] == 'offline'
       if order['order_type'] == 'sell' && order['platinum'] < sell_price
         sell_price = order['platinum']
-        s_player_name = order['player']['ingame_name']
+        s_player_name = order['user']['ingame_name']
       else
         if order['order_type'] == 'buy' && order['platinum'] > buy_price
           buy_price = order['platinum']
-          b_player_name = order['player']['ingame_name']
+          b_player_name = order['user']['ingame_name']
         end
       end
     end
