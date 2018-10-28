@@ -5,3 +5,5 @@ wf.log
 tail_log.bat
 *.sd
 start_discord_bot.sh
+vendor/*
+.bundle/
